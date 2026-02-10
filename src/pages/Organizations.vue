@@ -81,7 +81,7 @@ const organizations = ref<Organization[]>([
 ])
 
 const selectOrganization = (org: Organization) => {
-  router.push(`/organizations/${org.id}/projects`)
+  router.push(`/app/organizations/${org.id}/projects`)
 }
 </script>
 

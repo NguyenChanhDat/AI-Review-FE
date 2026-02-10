@@ -6,10 +6,33 @@ import Dashboard from './pages/Dashboard.vue'
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
+    redirect: '/onboarding/auth',
+  },
+  {
+    path: '/onboarding/auth',
+    name: 'OnboardingAuth',
+    component: () => import('./pages/OnboardingAuth.vue'),
+  },
+  {
+    path: '/onboarding/repo-provider',
+    name: 'OnboardingRepoProvider',
+    component: () => import('./pages/OnboardingRepoProvider.vue'),
+  },
+  {
+    path: '/onboarding/pat',
+    name: 'OnboardingPAT',
+    component: () => import('./pages/OnboardingPAT.vue'),
+  },
+  {
+    path: '/app',
     component: AppLayout,
     children: [
       {
         path: '',
+        redirect: '/app/dashboard',
+      },
+      {
+        path: 'dashboard',
         name: 'Dashboard',
         component: Dashboard,
       },

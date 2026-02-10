@@ -14,32 +14,32 @@ const navItems: NavItem[] = [
   {
     title: 'Dashboard',
     icon: '🏠',
-    path: '/',
+    path: '/app/dashboard',
   },
   {
     title: 'Organizations',
     icon: '🏢',
-    path: '/organizations',
+    path: '/app/organizations',
   },
   {
     title: 'Reviews',
     icon: '✓',
-    path: '/organizations',
+    path: '/app/organizations',
   },
   {
     title: 'Analytics',
     icon: '📊',
-    path: '/analytics',
+    path: '/app/analytics',
   },
   {
     title: 'Settings',
     icon: '⚙️',
-    path: '/settings',
+    path: '/app/settings',
   },
 ]
 
 const isActive = (path: string) => {
-  if (path === '/') return route.path === '/'
+  if (path === '/app/dashboard') return route.path.includes('dashboard') || route.path === '/app'
   return route.path.startsWith(path)
 }
 

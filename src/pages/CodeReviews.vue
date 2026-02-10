@@ -105,12 +105,12 @@ const getSeverityColor = (severity: string) => {
 
 const selectReview = (review: CodeReview) => {
   router.push(
-    `/organizations/${orgId}/projects/${projectId}/repos/${repoId}/reviews/${review.id}`
+    `/app/organizations/${orgId}/projects/${projectId}/repos/${repoId}/reviews/${review.id}`
   )
 }
 
 const goBack = () => {
-  router.push(`/organizations/${orgId}/projects/${projectId}/repos`)
+  router.push(`/app/organizations/${orgId}/projects/${projectId}/repos`)
 }
 
 const filterStatus = ref<string>('all')

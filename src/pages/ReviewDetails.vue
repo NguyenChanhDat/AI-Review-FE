@@ -83,7 +83,7 @@ const selectedComment = ref<CodeComment | null>(null)
 
 const goBack = () => {
   router.push(
-    `/organizations/${orgId}/projects/${projectId}/repos/${repoId}/reviews`
+    `/app/organizations/${orgId}/projects/${projectId}/repos/${repoId}/reviews`
   )
 }
 

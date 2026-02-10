@@ -111,7 +111,7 @@ const getStatusText = (status: string) => {
 }
 
 const goToOrganizations = () => {
-  router.push('/organizations')
+  router.push('/app/organizations')
 }
 </script>
 
@@ -218,7 +218,7 @@ const goToOrganizations = () => {
               ➕ New Review
             </button>
             <button
-              @click="router.push('/settings')"
+              @click="router.push('/app/settings')"
               class="w-full bg-slate-700 hover:bg-slate-600 text-slate-300 font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
             >
               ⚙️ Configure Rules

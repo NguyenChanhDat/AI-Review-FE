@@ -85,11 +85,11 @@ const projects = ref<Project[]>([
 ])
 
 const selectProject = (project: Project) => {
-  router.push(`/organizations/${orgId}/projects/${project.id}/repos`)
+  router.push(`/app/organizations/${orgId}/projects/${project.id}/repos`)
 }
 
 const goBack = () => {
-  router.push('/organizations')
+  router.push('/app/organizations')
 }
 </script>
 

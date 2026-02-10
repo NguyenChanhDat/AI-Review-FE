@@ -104,12 +104,12 @@ const repositories = ref<Repository[]>([
 
 const selectRepository = (repo: Repository) => {
   router.push(
-    `/organizations/${orgId}/projects/${projectId}/repos/${repo.id}/reviews`
+    `/app/organizations/${orgId}/projects/${projectId}/repos/${repo.id}/reviews`
   )
 }
 
 const goBack = () => {
-  router.push(`/organizations/${orgId}/projects`)
+  router.push(`/app/organizations/${orgId}/projects`)
 }
 </script>
 
