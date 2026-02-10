@@ -1,87 +1,51 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-interface Organization {
-  id: string
-  name: string
-  description: string
-  repos: number
-  teams: number
-  icon: string
+interface ProjectDto {
+  accountId: string
+  accountUri: string
+  accountName: string
 }
 
-const organizations = ref<Organization[]>([
-  {
-    id: '1',
-    name: 'TechCorp',
-    description: 'Enterprise software solutions',
-    repos: 24,
-    teams: 8,
-    icon: '💼',
-  },
-  {
-    id: '2',
-    name: 'DataInc',
-    description: 'Big data analytics platform',
-    repos: 18,
-    teams: 6,
-    icon: '📊',
-  },
-  {
-    id: '3',
-    name: 'SecureApp',
-    description: 'Security & compliance tools',
-    repos: 12,
-    teams: 5,
-    icon: '🔒',
-  },
-  {
-    id: '4',
-    name: 'CloudSys',
-    description: 'Cloud infrastructure management',
-    repos: 31,
-    teams: 12,
-    icon: '☁️',
-  },
-  {
-    id: '5',
-    name: 'APIHub',
-    description: 'RESTful API marketplace',
-    repos: 45,
-    teams: 15,
-    icon: '🔌',
-  },
-  {
-    id: '6',
-    name: 'DevTools',
-    description: 'Developer tools & utilities',
-    repos: 8,
-    teams: 3,
-    icon: '🛠️',
-  },
-  {
-    id: '7',
-    name: 'AI Research',
-    description: 'Machine learning & AI models',
-    repos: 16,
-    teams: 7,
-    icon: '🧠',
-  },
-  {
-    id: '8',
-    name: 'MobileFirst',
-    description: 'Mobile app development',
-    repos: 22,
-    teams: 9,
-    icon: '📱',
-  },
-])
+interface GetProjectsResponse {
+  count: number
+  projects: ProjectDto[]
+}
 
-const selectOrganization = (org: Organization) => {
-  router.push(`/app/organizations/${org.id}/projects`)
+const organizations = ref<ProjectDto[]>([])
+const isLoading = ref(false)
+const organizationCount = ref(0)
+
+const fetchOrganizations = async () => {
+  isLoading.value = true
+  try {
+    const response = await fetch('http://localhost:4000/api/project', {
+      credentials: 'include',
+    })
+
+    if (response.ok) {
+      const data: GetProjectsResponse = await response.json()
+      organizations.value = data.projects
+      organizationCount.value = data.count
+    } else {
+      console.error('Failed to fetch organizations')
+    }
+  } catch (error) {
+    console.error('Error fetching organizations:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchOrganizations()
+})
+
+const selectOrganization = (org: ProjectDto) => {
+  router.push(`/app/organizations/${org.accountId}/projects`)
 }
 </script>
 
@@ -93,31 +57,41 @@ const selectOrganization = (org: Organization) => {
       <p class="text-slate-400">Select an organization to view projects and code reviews.</p>
     </div>
 
+    <!-- Loading State -->
+    <div v-if="isLoading" class="text-center py-12">
+      <p class="text-slate-400">Loading organizations...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div v-else-if="organizations.length === 0" class="text-center py-12">
+      <p class="text-slate-400">No organizations found</p>
+    </div>
+
     <!-- Organization Cards Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       <div
         v-for="org in organizations"
-        :key="org.id"
+        :key="org.accountId"
         @click="selectOrganization(org)"
         class="bg-slate-800 border border-slate-700 rounded-lg p-6 hover:border-slate-500 hover:shadow-lg transition-all duration-300 cursor-pointer"
       >
         <div class="flex items-center gap-4 mb-4">
-          <span class="text-5xl">{{ org.icon }}</span>
-          <h2 class="text-white font-bold text-lg">{{ org.name }}</h2>
+          <span class="text-5xl">🏢</span>
+          <h2 class="text-white font-bold text-lg">{{ org.accountName }}</h2>
         </div>
 
-        <p class="text-slate-400 text-sm mb-4 line-clamp-2">{{ org.description }}</p>
+        <p class="text-slate-300 text-sm mb-4 break-all">
+          <span class="text-slate-500">ID:</span> {{ org.accountId }}
+        </p>
 
-        <div class="flex gap-4 text-sm mb-4">
-          <div class="flex items-center gap-1">
-            <span>📦</span>
-            <span class="text-slate-300">{{ org.repos }} repos</span>
-          </div>
-          <div class="flex items-center gap-1">
-            <span>👥</span>
-            <span class="text-slate-300">{{ org.teams }} teams</span>
-          </div>
-        </div>
+        <a
+          :href="org.accountUri"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-blue-400 hover:text-blue-300 text-sm mb-4 block break-all hover:underline"
+        >
+          {{ org.accountUri }}
+        </a>
 
         <button class="w-full text-blue-400 hover:text-blue-300 text-sm font-medium">
           Select →
@@ -127,11 +101,4 @@ const selectOrganization = (org: Organization) => {
   </div>
 </template>
 
-<style scoped>
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-</style>
+<style scoped></style>

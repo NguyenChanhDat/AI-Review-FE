@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -10,6 +10,17 @@ interface Stat {
   change: number
   icon: string
   color: string
+}
+
+interface ProjectDto {
+  accountId: string
+  accountUri: string
+  accountName: string
+}
+
+interface GetProjectsResponse {
+  count: number
+  projects: ProjectDto[]
 }
 
 const stats = ref<Stat[]>([
@@ -36,12 +47,15 @@ const stats = ref<Stat[]>([
   },
   {
     label: 'Organizations',
-    value: 8,
+    value: 0,
     change: 2.1,
     icon: '🏢',
     color: 'blue',
   },
 ])
+
+const organizations = ref<ProjectDto[]>([])
+const isLoading = ref(false)
 
 interface RecentReview {
   id: string
@@ -91,6 +105,32 @@ const recentReviews = ref<RecentReview[]>([
     timestamp: '1 day ago',
   },
 ])
+
+const fetchProjects = async () => {
+  isLoading.value = true
+  try {
+    const response = await fetch('http://localhost:4000/api/project', {
+      credentials: 'include',
+    })
+
+    if (response.ok) {
+      const data: GetProjectsResponse = await response.json()
+      organizations.value = data.projects
+      // Update the organizations stat
+      stats.value[3].value = data.count
+    } else {
+      console.error('Failed to fetch projects')
+    }
+  } catch (error) {
+    console.error('Error fetching projects:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchProjects()
+})
 
 const getStatusColor = (status: string) => {
   const colors: Record<string, string> = {
@@ -146,6 +186,51 @@ const goToOrganizations = () => {
           </div>
           <span class="text-4xl">{{ stat.icon }}</span>
         </div>
+      </div>
+    </div>
+
+    <!-- Organizations Section -->
+    <div class="bg-slate-800 border border-slate-700 rounded-lg overflow-hidden">
+      <div class="border-b border-slate-700 p-6 flex items-center justify-between">
+        <span class="text-white font-semibold">Organizations</span>
+        <span class="text-slate-400 text-sm">{{ organizations.length }} total</span>
+      </div>
+      <div v-if="isLoading" class="p-6 text-center text-slate-400">
+        Loading organizations...
+      </div>
+      <div v-else-if="organizations.length === 0" class="p-6 text-center text-slate-400">
+        No organizations found
+      </div>
+      <div v-else class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-slate-900 border-b border-slate-700">
+            <tr>
+              <th class="text-slate-300 font-semibold py-3 px-6 text-left">Account Name</th>
+              <th class="text-slate-300 font-semibold py-3 px-6 text-left">Account ID</th>
+              <th class="text-slate-300 font-semibold py-3 px-6 text-left">Account URI</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="org in organizations"
+              :key="org.accountId"
+              class="border-b border-slate-700 hover:bg-slate-700/30 transition-colors"
+            >
+              <td class="py-3 px-6 text-white font-medium">{{ org.accountName }}</td>
+              <td class="py-3 px-6 text-slate-300">{{ org.accountId }}</td>
+              <td class="py-3 px-6 text-slate-400 text-sm">
+                <a
+                  :href="org.accountUri"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-blue-400 hover:text-blue-300 break-all"
+                >
+                  {{ org.accountUri }}
+                </a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
