@@ -4,18 +4,17 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 
 const handleMicrosoft = () => {
-  router.push('/onboarding/repo-provider')
+  window.location.href = 'http://localhost:4000/api/auth/login'
 }
 </script>
 
 <template>
-  <div class="flex h-screen items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">
+  <div class="flex h-screen items-center justify-center bg-gray-50">
     <div class="w-full max-w-md px-6">
       <!-- Logo -->
       <div class="mb-12 text-center">
-        <div class="mb-4 text-5xl">🔍</div>
-        <h1 class="text-3xl font-bold text-white">Code Review Monitor</h1>
-        <p class="mt-2 text-slate-400">AI-powered code review system</p>
+        <h1 class="text-3xl font-bold text-blue-600">Code Review Monitor</h1>
+        <p class="mt-2 text-blue-600">AI-powered code review system</p>
       </div>
 
       <!-- Card -->
@@ -48,11 +47,6 @@ const handleMicrosoft = () => {
           </div>
         </div>
       </div>
-
-      <!-- Footer -->
-      <p class="mt-8 text-center text-sm text-slate-500">
-        This is a demo application. No real OAuth connection required.
-      </p>
     </div>
   </div>
 </template>

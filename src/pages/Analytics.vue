@@ -57,7 +57,11 @@ const maxReviews = ref(Math.max(...dateStats.value.map((s) => s.reviews)))
             : 'bg-slate-800 text-slate-300 hover:bg-slate-700',
         ]"
       >
-        {{ { week: 'This Week', month: 'This Month', quarter: 'This Quarter', year: 'This Year' }[period] }}
+        {{
+          { week: 'This Week', month: 'This Month', quarter: 'This Quarter', year: 'This Year' }[
+            period
+          ]
+        }}
       </button>
     </div>
 
@@ -95,11 +99,7 @@ const maxReviews = ref(Math.max(...dateStats.value.map((s) => s.reviews)))
         <div class="bg-slate-800 border border-slate-700 rounded-lg p-6">
           <h2 class="text-white font-semibold mb-4">Review Activity</h2>
           <div class="space-y-4">
-            <div
-              v-for="stat in dateStats"
-              :key="stat.date"
-              class="flex items-center gap-4"
-            >
+            <div v-for="stat in dateStats" :key="stat.date" class="flex items-center gap-4">
               <span class="w-12 text-slate-300 text-sm font-medium">{{ stat.date }}</span>
               <div class="flex-1 space-y-1">
                 <div class="flex items-end gap-2 h-12">

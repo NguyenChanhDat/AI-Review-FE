@@ -17,6 +17,9 @@ export default {
           100: '#f1f5f9',
           50: '#f8fafc',
         },
+        blue: {
+          600: '#2563eb',
+        },
       },
       spacing: {
         18: '4.5rem',

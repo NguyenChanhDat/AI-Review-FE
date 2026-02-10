@@ -19,11 +19,29 @@ const handleConnect = async () => {
   }
 
   isLoading.value = true
-  // Simulate API call
-  setTimeout(() => {
+  try {
+    const response = await fetch('http://localhost:4000/api/user', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        personalAccessToken: pat.value,
+      }),
+    })
+
+    if (response.ok) {
+      router.push('/app/dashboard')
+    } else {
+      alert('Failed to connect. Please check your PAT.')
+    }
+  } catch (error) {
+    alert('Error connecting to server')
+    console.error(error)
+  } finally {
     isLoading.value = false
-    router.push('/app/dashboard')
-  }, 1000)
+  }
 }
 
 const handleKeyDown = (e: KeyboardEvent) => {
