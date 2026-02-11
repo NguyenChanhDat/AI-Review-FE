@@ -12,6 +12,11 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
+    title: 'Dashboard',
+    icon: '🏠',
+    path: '/app/dashboard',
+  },
+  {
     title: 'Organizations',
     icon: '🏢',
     path: '/app/organizations',
@@ -34,7 +39,8 @@ const navItems: NavItem[] = [
 ]
 
 const isActive = (path: string) => {
-  if (path === '/app/organizations') return route.path.includes('organizations') || route.path === '/app'
+  if (path === '/app/dashboard') return route.path.includes('dashboard') || route.path === '/app'
+  if (path === '/app/organizations') return route.path.includes('organizations')
   return route.path.startsWith(path)
 }
 
