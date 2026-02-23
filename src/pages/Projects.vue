@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { fetchWithAuth } from '@/utils/api'
 
 const router = useRouter()
 const route = useRoute()
@@ -23,11 +24,8 @@ const isLoading = ref(false)
 const fetchProjects = async () => {
   isLoading.value = true
   try {
-    const response = await fetch(
-      `http://localhost:4000/api/organization/${organizationName}/projects`,
-      {
-        credentials: 'include',
-      },
+    const response = await fetchWithAuth(
+      `http://localhost:4000/api/organization/${organizationName}/projects`
     )
 
     if (response.ok) {

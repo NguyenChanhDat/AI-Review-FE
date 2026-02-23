@@ -1,9 +1,13 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+const isLoading = ref(false)
 
 const handleMicrosoft = () => {
+  // Redirect to backend OAuth login
+  // The backend should handle the OAuth flow and redirect back appropriately
   window.location.href = 'http://localhost:4000/api/auth/login'
 }
 </script>

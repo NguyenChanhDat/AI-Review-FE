@@ -14,6 +14,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import('./pages/OnboardingAuth.vue'),
   },
   {
+    path: '/onboarding/callback',
+    name: 'OnboardingCallback',
+    component: () => import('./pages/OnboardingCallback.vue'),
+  },
+  {
     path: '/onboarding/repo-provider',
     name: 'OnboardingRepoProvider',
     component: () => import('./pages/OnboardingRepoProvider.vue'),

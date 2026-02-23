@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { fetchWithAuth } from '@/utils/api'
 
 const router = useRouter()
 
@@ -20,12 +21,11 @@ const handleConnect = async () => {
 
   isLoading.value = true
   try {
-    const response = await fetch('http://localhost:4000/api/user', {
+    const response = await fetchWithAuth('http://localhost:4000/api/user', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include',
       body: JSON.stringify({
         personalAccessToken: pat.value,
       }),

@@ -1,10 +1,45 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { fetchWithAuth } from '@/utils/api'
 
 const router = useRouter()
+const isLoading = ref(false)
 
-const handleAzureDevOps = () => {
-  router.push('/onboarding/pat')
+interface SessionUserDto {
+  userId: string
+  displayName: string
+  hasPat: boolean
+}
+
+const handleAzureDevOps = async () => {
+  isLoading.value = true
+  console.log('OnboardingRepoProvider: Azure DevOps clicked, checking session...')
+
+  try {
+    // Check session when user clicks Azure DevOps
+    const response = await fetchWithAuth('http://localhost:4000/api/auth/session')
+    console.log('OnboardingRepoProvider: Session check status:', response.status)
+
+    if (response.ok) {
+      const session: SessionUserDto = await response.json()
+      console.log('OnboardingRepoProvider: Session data:', session)
+
+      if (session.hasPat) {
+        console.log('OnboardingRepoProvider: User has PAT, redirecting to dashboard')
+        router.push('/app/dashboard')
+      } else {
+        console.log('OnboardingRepoProvider: User needs to provide PAT, going to PAT page')
+        router.push('/onboarding/pat')
+      }
+    } else if (response.status === 401) {
+      console.log('OnboardingRepoProvider: Not authenticated, redirecting to auth')
+      router.push('/onboarding/auth')
+    }
+  } catch (error) {
+    console.error('OnboardingRepoProvider: Error checking session:', error)
+    isLoading.value = false
+  }
 }
 
 const handleBack = () => {
@@ -13,7 +48,9 @@ const handleBack = () => {
 </script>
 
 <template>
-  <div class="flex h-screen items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">
+  <div
+    class="flex h-screen items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800"
+  >
     <div class="w-full max-w-md px-6">
       <!-- Header with Back Button -->
       <div class="mb-8 flex items-center">
@@ -38,12 +75,13 @@ const handleBack = () => {
         <!-- Azure DevOps Option -->
         <button
           @click="handleAzureDevOps"
-          class="mb-4 w-full rounded-lg border-2 border-slate-600 bg-slate-700 px-6 py-4 font-semibold text-white transition-all hover:border-blue-500 hover:bg-slate-600"
+          :disabled="isLoading"
+          class="mb-4 w-full rounded-lg border-2 border-slate-600 bg-slate-700 px-6 py-4 font-semibold text-white transition-all hover:border-blue-500 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <div class="flex items-center justify-center gap-3">
             <span class="text-2xl">🔵</span>
             <div>
-              <div>Azure DevOps</div>
+              <div>{{ isLoading ? 'Processing...' : 'Azure DevOps' }}</div>
               <div class="text-sm font-normal text-slate-400">Microsoft Azure Repos</div>
             </div>
           </div>

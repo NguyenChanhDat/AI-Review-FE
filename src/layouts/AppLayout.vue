@@ -1,8 +1,16 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { fetchWithAuth } from '@/utils/api'
 
 const router = useRouter()
 const route = useRoute()
+
+interface SessionUserDto {
+  userId: string
+  displayName: string
+  hasPat: boolean
+}
 
 interface NavItem {
   title: string
@@ -38,6 +46,8 @@ const navItems: NavItem[] = [
   },
 ]
 
+const user = ref<SessionUserDto | null>(null)
+
 const isActive = (path: string) => {
   if (path === '/app/dashboard') return route.path.includes('dashboard') || route.path === '/app'
   if (path === '/app/organizations') return route.path.includes('organizations')
@@ -47,6 +57,35 @@ const isActive = (path: string) => {
 const navigate = (path: string) => {
   router.push(path)
 }
+
+const loadUserSession = async () => {
+  try {
+    console.log('AppLayout: Loading user session...')
+    const response = await fetchWithAuth('http://localhost:4000/api/auth/session')
+    if (response.ok) {
+      user.value = await response.json()
+      console.log('AppLayout: User session loaded:', user.value)
+    }
+  } catch (error) {
+    console.error('Error loading user session:', error)
+  }
+}
+
+const handleLogout = async () => {
+  try {
+    await fetchWithAuth('http://localhost:4000/api/auth/logout', {
+      method: 'POST',
+    })
+  } catch (error) {
+    console.error('Error during logout:', error)
+  } finally {
+    router.push('/onboarding/auth')
+  }
+}
+
+onMounted(() => {
+  loadUserSession()
+})
 </script>
 
 <template>
@@ -88,11 +127,19 @@ const navigate = (path: string) => {
 
       <!-- User Profile -->
       <div class="border-t border-slate-800 p-4">
-        <button class="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-slate-800 transition-colors">
-          <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex-shrink-0"></div>
+        <button
+          @click="handleLogout"
+          class="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-slate-800 transition-colors group"
+          title="Click to logout"
+        >
+          <div
+            class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex-shrink-0"
+          ></div>
           <div class="flex-1 min-w-0 text-left">
-            <p class="text-white text-sm font-medium truncate">Developer</p>
-            <p class="text-slate-400 text-xs truncate">dev@example.com</p>
+            <p class="text-white text-sm font-medium truncate">
+              {{ user?.displayName || 'Developer' }}
+            </p>
+            <p class="text-slate-400 text-xs truncate">Logout</p>
           </div>
         </button>
       </div>
@@ -101,7 +148,9 @@ const navigate = (path: string) => {
     <!-- Main Content -->
     <div class="flex-1 flex flex-col bg-slate-950">
       <!-- Header -->
-      <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+      <header
+        class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between"
+      >
         <h1 class="text-white text-lg font-semibold">Code Review Monitor</h1>
         <div class="flex items-center gap-4">
           <button class="p-2 hover:bg-slate-800 rounded-lg transition-colors text-white text-xl">

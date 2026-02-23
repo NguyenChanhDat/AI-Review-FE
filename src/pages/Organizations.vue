@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { fetchWithAuth } from '@/utils/api'
 
 const router = useRouter()
 
@@ -22,9 +23,7 @@ const organizationCount = ref(0)
 const fetchOrganizations = async () => {
   isLoading.value = true
   try {
-    const response = await fetch('http://localhost:4000/api/organization', {
-      credentials: 'include',
-    })
+    const response = await fetchWithAuth('http://localhost:4000/api/organization')
 
     if (response.ok) {
       const data: GetOrganizationsResponse = await response.json()
