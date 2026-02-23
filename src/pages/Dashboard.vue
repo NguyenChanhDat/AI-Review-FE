@@ -12,15 +12,15 @@ interface Stat {
   color: string
 }
 
-interface ProjectDto {
+interface OrganizationDto {
   accountId: string
   accountUri: string
   accountName: string
 }
 
-interface GetProjectsResponse {
+interface GetOrganizationsResponse {
   count: number
-  projects: ProjectDto[]
+  organizations: OrganizationDto[]
 }
 
 const stats = ref<Stat[]>([
@@ -54,7 +54,7 @@ const stats = ref<Stat[]>([
   },
 ])
 
-const organizations = ref<ProjectDto[]>([])
+const organizations = ref<OrganizationDto[]>([])
 const isLoading = ref(false)
 
 interface RecentReview {
@@ -106,31 +106,27 @@ const recentReviews = ref<RecentReview[]>([
   },
 ])
 
-const fetchProjects = async () => {
+const fetchOrganizations = async () => {
   isLoading.value = true
   try {
-    const response = await fetch('http://localhost:4000/api/project', {
+    const response = await fetch('http://localhost:4000/api/organization', {
       credentials: 'include',
     })
 
     if (response.ok) {
-      const data: GetProjectsResponse = await response.json()
-      organizations.value = data.projects
+      const data: GetOrganizationsResponse = await response.json()
+      organizations.value = data.organizations
       // Update the organizations stat
       stats.value[3].value = data.count
     } else {
-      console.error('Failed to fetch projects')
+      console.error('Failed to fetch organizations')
     }
   } catch (error) {
-    console.error('Error fetching projects:', error)
+    console.error('Error fetching organizations:', error)
   } finally {
     isLoading.value = false
   }
 }
-
-onMounted(() => {
-  fetchProjects()
-})
 
 const getStatusColor = (status: string) => {
   const colors: Record<string, string> = {
@@ -153,6 +149,10 @@ const getStatusText = (status: string) => {
 const goToOrganizations = () => {
   router.push('/app/organizations')
 }
+
+onMounted(() => {
+  fetchOrganizations()
+})
 </script>
 
 <template>
@@ -174,12 +174,7 @@ const goToOrganizations = () => {
           <div>
             <p class="text-slate-400 text-sm font-medium mb-2">{{ stat.label }}</p>
             <h2 class="text-3xl font-bold text-white mb-1">{{ stat.value }}</h2>
-            <p
-              :class="[
-                'text-sm',
-                stat.change > 0 ? 'text-green-400' : 'text-red-400',
-              ]"
-            >
+            <p :class="['text-sm', stat.change > 0 ? 'text-green-400' : 'text-red-400']">
               {{ stat.change > 0 ? '↑' : '↓' }} {{ Math.abs(stat.change) }}%
               {{ stat.change > 0 ? 'increase' : 'decrease' }}
             </p>
@@ -195,9 +190,7 @@ const goToOrganizations = () => {
         <span class="text-white font-semibold">Organizations</span>
         <span class="text-slate-400 text-sm">{{ organizations.length }} total</span>
       </div>
-      <div v-if="isLoading" class="p-6 text-center text-slate-400">
-        Loading organizations...
-      </div>
+      <div v-if="isLoading" class="p-6 text-center text-slate-400">Loading organizations...</div>
       <div v-else-if="organizations.length === 0" class="p-6 text-center text-slate-400">
         No organizations found
       </div>
@@ -205,8 +198,7 @@ const goToOrganizations = () => {
         <table class="w-full">
           <thead class="bg-slate-900 border-b border-slate-700">
             <tr>
-              <th class="text-slate-300 font-semibold py-3 px-6 text-left">Account Name</th>
-              <th class="text-slate-300 font-semibold py-3 px-6 text-left">Account ID</th>
+              <th class="text-slate-300 font-semibold py-3 px-6 text-left">Name</th>
               <th class="text-slate-300 font-semibold py-3 px-6 text-left">Account URI</th>
             </tr>
           </thead>
@@ -217,7 +209,6 @@ const goToOrganizations = () => {
               class="border-b border-slate-700 hover:bg-slate-700/30 transition-colors"
             >
               <td class="py-3 px-6 text-white font-medium">{{ org.accountName }}</td>
-              <td class="py-3 px-6 text-slate-300">{{ org.accountId }}</td>
               <td class="py-3 px-6 text-slate-400 text-sm">
                 <a
                   :href="org.accountUri"
@@ -268,7 +259,10 @@ const goToOrganizations = () => {
                   <td class="py-3 px-6 text-slate-300">{{ review.organization }}</td>
                   <td class="py-3 px-6">
                     <span
-                      :class="['px-3 py-1 rounded text-sm font-medium', getStatusColor(review.status)]"
+                      :class="[
+                        'px-3 py-1 rounded text-sm font-medium',
+                        getStatusColor(review.status),
+                      ]"
                     >
                       {{ getStatusText(review.status) }}
                     </span>

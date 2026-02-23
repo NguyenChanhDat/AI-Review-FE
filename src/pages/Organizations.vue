@@ -4,31 +4,31 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-interface ProjectDto {
+interface OrganizationDto {
   accountId: string
   accountUri: string
   accountName: string
 }
 
-interface GetProjectsResponse {
+interface GetOrganizationsResponse {
   count: number
-  projects: ProjectDto[]
+  organizations: OrganizationDto[]
 }
 
-const organizations = ref<ProjectDto[]>([])
+const organizations = ref<OrganizationDto[]>([])
 const isLoading = ref(false)
 const organizationCount = ref(0)
 
 const fetchOrganizations = async () => {
   isLoading.value = true
   try {
-    const response = await fetch('http://localhost:4000/api/project', {
+    const response = await fetch('http://localhost:4000/api/organization', {
       credentials: 'include',
     })
 
     if (response.ok) {
-      const data: GetProjectsResponse = await response.json()
-      organizations.value = data.projects
+      const data: GetOrganizationsResponse = await response.json()
+      organizations.value = data.organizations
       organizationCount.value = data.count
     } else {
       console.error('Failed to fetch organizations')
@@ -44,8 +44,8 @@ onMounted(() => {
   fetchOrganizations()
 })
 
-const selectOrganization = (org: ProjectDto) => {
-  router.push(`/app/organizations/${org.accountId}/projects`)
+const selectOrganization = (org: OrganizationDto) => {
+  router.push(`/app/organizations/${org.accountName}/projects`)
 }
 </script>
 
