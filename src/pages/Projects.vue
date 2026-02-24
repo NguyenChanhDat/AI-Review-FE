@@ -25,7 +25,7 @@ const fetchProjects = async () => {
   isLoading.value = true
   try {
     const response = await fetchWithAuth(
-      `http://localhost:4000/api/organization/${organizationName}/projects`
+      `http://localhost:4000/api/organizations/${organizationName}/projects`,
     )
 
     if (response.ok) {
@@ -46,7 +46,10 @@ onMounted(() => {
 })
 
 const selectProject = (project: ProjectDto) => {
-  router.push(`/app/organizations/${organizationName}/projects/${project.id}/repos`)
+  router.push({
+    path: `/app/organizations/${organizationName}/projects/${project.id}/repos`,
+    query: { projectName: project.name }
+  })
 }
 
 const goBack = () => {
@@ -96,14 +99,14 @@ const goBack = () => {
               <h3 class="text-white font-bold text-lg">{{ project.name }}</h3>
             </div>
 
-            <a
+            <!-- <a
               :href="project.url"
               target="_blank"
               rel="noopener noreferrer"
               class="text-blue-400 hover:text-blue-300 text-sm mb-4 block break-all hover:underline"
             >
               {{ project.url }}
-            </a>
+            </a> -->
           </div>
 
           <span class="text-slate-400 text-2xl ml-4">→</span>

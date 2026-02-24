@@ -23,7 +23,7 @@ const organizationCount = ref(0)
 const fetchOrganizations = async () => {
   isLoading.value = true
   try {
-    const response = await fetchWithAuth('http://localhost:4000/api/organization')
+    const response = await fetchWithAuth('http://localhost:4000/api/organizations')
 
     if (response.ok) {
       const data: GetOrganizationsResponse = await response.json()
@@ -79,7 +79,7 @@ const selectOrganization = (org: OrganizationDto) => {
           <h2 class="text-white font-bold text-lg">{{ org.accountName }}</h2>
         </div>
 
-        <p class="text-slate-300 text-sm mb-4 break-all">
+        <!-- <p class="text-slate-300 text-sm mb-4 break-all">
           <span class="text-slate-500">ID:</span> {{ org.accountId }}
         </p>
 
@@ -89,8 +89,9 @@ const selectOrganization = (org: OrganizationDto) => {
           rel="noopener noreferrer"
           class="text-blue-400 hover:text-blue-300 text-sm mb-4 block break-all hover:underline"
         >
+          <span class="text-slate-500">link:</span>
           {{ org.accountUri }}
-        </a>
+        </a> -->
 
         <button class="w-full text-blue-400 hover:text-blue-300 text-sm font-medium">
           Select →

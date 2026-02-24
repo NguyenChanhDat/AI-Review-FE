@@ -110,7 +110,7 @@ const recentReviews = ref<RecentReview[]>([
 const fetchOrganizations = async () => {
   isLoading.value = true
   try {
-    const response = await fetchWithAuth('http://localhost:4000/api/organization')
+    const response = await fetchWithAuth('http://localhost:4000/api/organizations')
 
     if (response.ok) {
       const data: GetOrganizationsResponse = await response.json()
