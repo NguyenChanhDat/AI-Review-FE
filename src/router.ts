@@ -67,8 +67,13 @@ const routes: RouteRecordRaw[] = [
         component: () => import('./pages/ReviewDetails.vue'),
       },
       {
-        path: 'settings',
-        name: 'Settings',
+        path: 'rag-knowledge-base',
+        name: 'RAGKnowledgeBase',
+        component: () => import('./pages/RAGKnowledgeBase.vue'),
+      },
+      {
+        path: 'setting',
+        name: 'Setting',
         component: () => import('./pages/Settings.vue'),
       },
       {

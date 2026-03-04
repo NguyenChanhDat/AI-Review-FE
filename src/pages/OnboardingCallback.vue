@@ -16,19 +16,14 @@ onMounted(async () => {
     console.log('OnboardingCallback: Checking session after OAuth...')
     // Check session after OAuth callback
     const response = await fetchWithAuth('http://localhost:4000/api/auth/session')
-    console.log('OnboardingCallback: Session response status:', response.status)
 
     if (response.ok) {
       const session: SessionUserDto = await response.json()
       console.log('OnboardingCallback: Session data:', session)
 
       if (session.hasPat) {
-        console.log('OnboardingCallback: User has PAT, redirecting to dashboard')
-        // User has PAT, skip onboarding and go directly to dashboard
         router.push('/app/dashboard')
       } else {
-        console.log('OnboardingCallback: User does not have PAT, redirecting to repo provider')
-        // User needs to provide PAT, go to repo provider selection
         router.push('/onboarding/repo-provider')
       }
     } else {
@@ -37,7 +32,6 @@ onMounted(async () => {
       router.push('/onboarding/auth')
     }
   } catch (error) {
-    console.error('OnboardingCallback: Error during OAuth callback:', error)
     router.push('/onboarding/auth')
   }
 })

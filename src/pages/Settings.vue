@@ -1,82 +1,64 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-interface ReviewRule {
-  id: string
-  name: string
-  description: string
-  category: string
-  severity: 'high' | 'medium' | 'low'
-  enabled: boolean
-}
+const activeTab = ref<'general' | 'ai-model'>('general')
+const reviewTimeout = ref(120)
+const autoReviewMR = ref(false)
+const autoPushComment = ref(false)
+const enableCaching = ref(false)
 
-const reviewRules = ref<ReviewRule[]>([
-  {
-    id: '1',
-    name: 'SQL Injection Prevention',
-    description: 'Detects potential SQL injection vulnerabilities in queries',
-    category: 'Security',
-    severity: 'high',
-    enabled: true,
-  },
-  {
-    id: '2',
-    name: 'XSS Prevention',
-    description: 'Identifies potential cross-site scripting vulnerabilities',
-    category: 'Security',
-    severity: 'high',
-    enabled: true,
-  },
-  {
-    id: '3',
-    name: 'Performance Issues',
-    description: 'Detects N+1 queries and inefficient loops',
-    category: 'Performance',
-    severity: 'medium',
-    enabled: true,
-  },
-  {
-    id: '4',
-    name: 'Code Duplication',
-    description: 'Identifies repeated code blocks',
-    category: 'Code Quality',
-    severity: 'low',
-    enabled: true,
-  },
-  {
-    id: '5',
-    name: 'Missing Error Handling',
-    description: 'Flags functions without proper error handling',
-    category: 'Reliability',
-    severity: 'medium',
-    enabled: false,
-  },
-  {
-    id: '6',
-    name: 'Unused Variables',
-    description: 'Detects unused variables and imports',
-    category: 'Code Quality',
-    severity: 'low',
-    enabled: true,
-  },
-])
+const selectedModel = ref('gpt-4-turbo')
+const autoSelectModel = ref(false)
 
-const activeTab = ref('rules')
-const autoReview = ref(true)
-const emailNotifications = ref(true)
-const strictMode = ref(false)
+const models = [
+  {
+    id: 'gpt-4-turbo',
+    name: 'GPT-4 Turbo',
+    description: 'Most accurate, best for complex code reviews',
+    cost: '$$$',
+    quality: 'medium',
+  },
+  {
+    id: 'claude-3-sonnet',
+    name: 'Claude 3 Sonnet',
+    description: 'Balanced performance and cost',
+    cost: '$$',
+    quality: 'medium',
+  },
+  {
+    id: 'claude-3-haiku',
+    name: 'Claude 3 Haiku',
+    description: 'Fast and cost-effective',
+    cost: '$',
+    quality: 'low',
+  },
+]
 
-const getSeverityColor = (severity: string) => {
-  const colors: Record<string, string> = {
-    high: 'bg-red-950 text-red-300',
-    medium: 'bg-orange-950 text-orange-300',
-    low: 'bg-green-950 text-green-300',
-  }
-  return colors[severity]
-}
+const mrSizeTiers = [
+  {
+    label: 'Small MRs',
+    range: '< 100 lines changed',
+    model: 'Claude 3 Haiku',
+    cost: '$',
+  },
+  {
+    label: 'Medium MRs',
+    range: '100-500 lines',
+    model: 'Claude 3 Sonnet',
+    cost: '$$',
+  },
+  {
+    label: 'Large MRs',
+    range: '> 500 lines',
+    model: 'GPT-4 Turbo',
+    cost: '$$$',
+  },
+]
 
-const toggleRule = (rule: ReviewRule) => {
-  rule.enabled = !rule.enabled
+const getCostColor = (cost: string) => {
+  if (cost === '$$$') return 'bg-red-900 text-red-300'
+  if (cost === '$$') return 'bg-orange-900 text-orange-300'
+  return 'bg-green-900 text-green-300'
 }
 </script>
 
@@ -85,232 +67,207 @@ const toggleRule = (rule: ReviewRule) => {
     <!-- Header -->
     <div>
       <h1 class="text-3xl font-bold text-white mb-2">Settings</h1>
-      <p class="text-slate-400">Customize your AI code review rules and configuration.</p>
+      <p class="text-slate-400">Configure system preferences and integrations</p>
     </div>
 
     <!-- Tabs -->
-    <div class="flex gap-4 border-b border-slate-700">
-      <button
-        @click="activeTab = 'rules'"
-        :class="[
-          'px-4 py-3 font-medium border-b-2 transition-colors',
-          activeTab === 'rules'
-            ? 'text-white border-blue-600'
-            : 'text-slate-400 border-transparent hover:text-slate-300',
-        ]"
-      >
-        📋 Review Rules
-      </button>
-      <button
-        @click="activeTab = 'rag'"
-        :class="[
-          'px-4 py-3 font-medium border-b-2 transition-colors',
-          activeTab === 'rag'
-            ? 'text-white border-blue-600'
-            : 'text-slate-400 border-transparent hover:text-slate-300',
-        ]"
-      >
-        🧠 RAG Configuration
-      </button>
-      <button
-        @click="activeTab = 'general'"
-        :class="[
-          'px-4 py-3 font-medium border-b-2 transition-colors',
-          activeTab === 'general'
-            ? 'text-white border-blue-600'
-            : 'text-slate-400 border-transparent hover:text-slate-300',
-        ]"
-      >
-        ⚙️ General Settings
-      </button>
-    </div>
-
-    <!-- Rules Tab -->
-    <div v-if="activeTab === 'rules'" class="space-y-4">
-      <button class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
-        ➕ Create New Rule
-      </button>
-
-      <!-- Rules List -->
-      <div class="space-y-3">
-        <div
-          v-for="rule in reviewRules"
-          :key="rule.id"
+    <div class="border-b border-slate-700">
+      <div class="flex gap-8">
+        <button
+          type="button"
+          @click="activeTab = 'general'"
           :class="[
-            'bg-slate-800 border border-slate-700 rounded-lg p-6',
-            { 'opacity-50': !rule.enabled },
+            'py-4 font-medium border-b-2 transition-colors',
+            activeTab === 'general'
+              ? 'text-white border-blue-500'
+              : 'text-slate-400 border-transparent hover:text-slate-300',
           ]"
         >
-          <div class="flex items-start justify-between">
-            <div class="flex-1">
-              <div class="flex items-center gap-3 mb-2">
-                <h3 class="text-white font-bold text-lg">{{ rule.name }}</h3>
-                <span :class="['px-2 py-1 rounded text-xs font-medium', getSeverityColor(rule.severity)]">
-                  {{ rule.severity }}
-                </span>
-                <span class="px-2 py-1 rounded text-xs font-medium bg-slate-700 text-slate-300">
-                  {{ rule.category }}
-                </span>
-              </div>
-              <p class="text-slate-400 text-sm mb-2">{{ rule.description }}</p>
-            </div>
-
-            <div class="flex items-center gap-2 ml-4">
-              <button
-                @click="toggleRule(rule)"
-                :class="[
-                  'relative w-12 h-6 rounded-full transition-colors',
-                  rule.enabled ? 'bg-blue-600' : 'bg-slate-700',
-                ]"
-              >
-                <span
-                  :class="[
-                    'absolute w-5 h-5 bg-white rounded-full top-0.5 transition-transform',
-                    rule.enabled ? 'translate-x-6' : 'translate-x-0.5',
-                  ]"
-                ></span>
-              </button>
-              <button class="p-2 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white">
-                ✏️
-              </button>
-            </div>
-          </div>
-        </div>
+          General
+        </button>
+        <button
+          type="button"
+          @click="activeTab = 'ai-model'"
+          :class="[
+            'py-4 font-medium border-b-2 transition-colors',
+            activeTab === 'ai-model'
+              ? 'text-white border-blue-500'
+              : 'text-slate-400 border-transparent hover:text-slate-300',
+          ]"
+        >
+          AI Model
+        </button>
       </div>
     </div>
 
-    <!-- RAG Configuration Tab -->
-    <div v-if="activeTab === 'rag'" class="space-y-4">
-      <div class="bg-slate-800 border border-slate-700 rounded-lg p-6">
-        <h2 class="text-white font-semibold mb-4">RAG Model Configuration</h2>
-        <div class="space-y-4">
-          <div>
-            <label class="text-slate-300 text-sm font-medium mb-2 block">
-              Knowledge Base
-            </label>
-            <select class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white">
-              <option>Internal Codebase</option>
-              <option>Community Standards</option>
-              <option>Custom Rules</option>
-            </select>
-          </div>
+    <!-- General Tab -->
+    <div v-show="activeTab === 'general'" class="space-y-6">
+      <h2 class="text-white font-semibold text-lg">Review Settings</h2>
 
-          <div>
-            <label class="text-slate-300 text-sm font-medium mb-2 block">
-              Model Temperature: 0.7
-            </label>
-            <input type="range" min="0" max="1" step="0.1" value="0.7" class="w-full">
-            <p class="text-slate-400 text-xs mt-2">
-              Controls creativity/randomness of AI suggestions (0 = deterministic, 1 = creative)
-            </p>
-          </div>
+      <!-- Review Timeout -->
+      <div class="border-b border-slate-700 pb-6">
+        <label class="text-slate-300 font-medium mb-3 block">Review Timeout (seconds)</label>
+        <input
+          v-model.number="reviewTimeout"
+          type="number"
+          class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white w-full max-w-xs"
+        />
+        <p class="text-slate-400 text-sm mt-2">Maximum time for AI review</p>
+      </div>
 
-          <div>
-            <label class="text-slate-300 text-sm font-medium mb-2 block">
-              Context Window Size
-            </label>
-            <input type="number" value="2048" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white">
-          </div>
-
-          <div>
-            <label class="text-slate-300 text-sm font-medium mb-2 block">
-              Custom Documentation
-            </label>
-            <textarea
-              placeholder="e.g., Must use async/await instead of promises..."
-              class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white resize-none"
-              rows="4"
-            ></textarea>
-          </div>
-
-          <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition-colors">
-            💾 Save RAG Configuration
-          </button>
+      <!-- Auto-review on MR creation -->
+      <div class="border-b border-slate-700 pb-6 flex items-start justify-between">
+        <div class="flex-1">
+          <h3 class="text-white font-medium">Auto-review on MR creation</h3>
+          <p class="text-slate-400 text-sm mt-1">
+            Automatically trigger reviews when MRs are opened
+          </p>
         </div>
+        <button
+          @click="autoReviewMR = !autoReviewMR"
+          :class="[
+            'relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ml-4',
+            autoReviewMR ? 'bg-blue-600' : 'bg-slate-700',
+          ]"
+        >
+          <span
+            :class="[
+              'absolute w-5 h-5 bg-white rounded-full top-0.5 transition-transform',
+              autoReviewMR ? 'translate-x-6' : 'translate-x-0.5',
+            ]"
+          ></span>
+        </button>
+      </div>
+
+      <!-- Auto-push AI review comment -->
+      <div class="border-b border-slate-700 pb-6 flex items-start justify-between">
+        <div class="flex-1">
+          <h3 class="text-white font-medium">Auto-push AI review comment</h3>
+          <p class="text-slate-400 text-sm mt-1">
+            Automatically push AI review comment to PR without Required Reviewer's Approve
+          </p>
+        </div>
+        <button
+          @click="autoPushComment = !autoPushComment"
+          :class="[
+            'relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ml-4',
+            autoPushComment ? 'bg-blue-600' : 'bg-slate-700',
+          ]"
+        >
+          <span
+            :class="[
+              'absolute w-5 h-5 bg-white rounded-full top-0.5 transition-transform',
+              autoPushComment ? 'translate-x-6' : 'translate-x-0.5',
+            ]"
+          ></span>
+        </button>
+      </div>
+
+      <!-- Enable caching -->
+      <div class="flex items-start justify-between">
+        <div class="flex-1">
+          <h3 class="text-white font-medium">Enable caching</h3>
+          <p class="text-slate-400 text-sm mt-1">Cache results for identical code patterns</p>
+        </div>
+        <button
+          @click="enableCaching = !enableCaching"
+          :class="[
+            'relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ml-4',
+            enableCaching ? 'bg-blue-600' : 'bg-slate-700',
+          ]"
+        >
+          <span
+            :class="[
+              'absolute w-5 h-5 bg-white rounded-full top-0.5 transition-transform',
+              enableCaching ? 'translate-x-6' : 'translate-x-0.5',
+            ]"
+          ></span>
+        </button>
       </div>
     </div>
 
-    <!-- General Settings Tab -->
-    <div v-if="activeTab === 'general'" class="space-y-4">
-      <div class="bg-slate-800 border border-slate-700 rounded-lg p-6">
-        <h2 class="text-white font-semibold mb-4">General Settings</h2>
-        <div class="space-y-4">
-          <div class="border-b border-slate-700 pb-4 flex items-center justify-between">
-            <div>
-              <h3 class="text-white font-medium">Auto Review</h3>
-              <p class="text-slate-400 text-sm">Automatically run reviews on new commits</p>
-            </div>
-            <button
-              @click="autoReview = !autoReview"
-              :class="[
-                'relative w-12 h-6 rounded-full transition-colors',
-                autoReview ? 'bg-blue-600' : 'bg-slate-700',
-              ]"
-            >
-              <span
-                :class="[
-                  'absolute w-5 h-5 bg-white rounded-full top-0.5 transition-transform',
-                  autoReview ? 'translate-x-6' : 'translate-x-0.5',
-                ]"
-              ></span>
-            </button>
-          </div>
+    <!-- AI Model Tab -->
+    <div v-show="activeTab === 'ai-model'" class="space-y-6">
+      <div class="flex items-center gap-2">
+        <span class="text-2xl">🤖</span>
+        <h2 class="text-white font-semibold text-lg">AI Model Selection</h2>
+      </div>
 
-          <div class="border-b border-slate-700 pb-4 flex items-center justify-between">
-            <div>
-              <h3 class="text-white font-medium">Email Notifications</h3>
-              <p class="text-slate-400 text-sm">Get notified when reviews are complete</p>
-            </div>
-            <button
-              @click="emailNotifications = !emailNotifications"
-              :class="[
-                'relative w-12 h-6 rounded-full transition-colors',
-                emailNotifications ? 'bg-blue-600' : 'bg-slate-700',
-              ]"
-            >
-              <span
-                :class="[
-                  'absolute w-5 h-5 bg-white rounded-full top-0.5 transition-transform',
-                  emailNotifications ? 'translate-x-6' : 'translate-x-0.5',
-                ]"
-              ></span>
-            </button>
-          </div>
+      <!-- Default AI Model -->
+      <div class="border-b border-slate-700 pb-6">
+        <label class="text-slate-300 font-medium mb-3 block">Default AI Model</label>
+        <p class="text-slate-400 text-sm mb-3">Select the model used for code reviews</p>
 
-          <div class="border-b border-slate-700 pb-4 flex items-center justify-between">
-            <div>
-              <h3 class="text-white font-medium">Strict Mode</h3>
-              <p class="text-slate-400 text-sm">Flag all warnings as blocking issues</p>
-            </div>
-            <button
-              @click="strictMode = !strictMode"
-              :class="[
-                'relative w-12 h-6 rounded-full transition-colors',
-                strictMode ? 'bg-blue-600' : 'bg-slate-700',
-              ]"
-            >
-              <span
-                :class="[
-                  'absolute w-5 h-5 bg-white rounded-full top-0.5 transition-transform',
-                  strictMode ? 'translate-x-6' : 'translate-x-0.5',
-                ]"
-              ></span>
-            </button>
-          </div>
+        <div class="bg-slate-800 border border-slate-700 rounded-lg p-4">
+          <select
+            v-model="selectedModel"
+            class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white appearance-none cursor-pointer"
+          >
+            <option v-for="model in models" :key="model.id" :value="model.id">
+              {{ model.name }}
+            </option>
+          </select>
 
-          <div>
-            <label class="text-slate-300 text-sm font-medium mb-2 block">
-              Review Threshold
-            </label>
-            <select class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white">
-              <option>All Issues</option>
-              <option>High + Medium</option>
-              <option>High Only</option>
-            </select>
-            <p class="text-slate-400 text-xs mt-2">
-              Minimum severity level to include in reviews
-            </p>
+          <div
+            v-for="model in models"
+            :key="model.id"
+            v-show="selectedModel === model.id"
+            class="mt-3"
+          >
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-purple-400">🤖</span>
+              <span class="text-white font-medium">{{ model.name }}</span>
+              <span :class="['px-2 py-0.5 rounded text-xs font-medium', getCostColor(model.cost)]">
+                {{ model.cost }}
+              </span>
+              <span class="px-2 py-0.5 rounded text-xs font-medium bg-yellow-900 text-yellow-300">
+                {{ model.quality }}
+              </span>
+            </div>
+            <p class="text-slate-400 text-sm">{{ model.description }}</p>
           </div>
+        </div>
+      </div>
+
+      <!-- Auto-select model based on MR size -->
+      <div class="border-b border-slate-700 pb-6 flex items-start justify-between">
+        <div class="flex-1">
+          <h3 class="text-white font-medium">Auto-select model based on MR size</h3>
+          <p class="text-slate-400 text-sm mt-1">
+            Automatically choose cost-effective models for smaller MRs
+          </p>
+        </div>
+        <button
+          @click="autoSelectModel = !autoSelectModel"
+          :class="[
+            'relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ml-4',
+            autoSelectModel ? 'bg-blue-600' : 'bg-slate-700',
+          ]"
+        >
+          <span
+            :class="[
+              'absolute w-5 h-5 bg-white rounded-full top-0.5 transition-transform',
+              autoSelectModel ? 'translate-x-6' : 'translate-x-0.5',
+            ]"
+          ></span>
+        </button>
+      </div>
+
+      <!-- MR Size Tiers -->
+      <div class="grid grid-cols-3 gap-4">
+        <div
+          v-for="tier in mrSizeTiers"
+          :key="tier.label"
+          class="bg-slate-800 border border-slate-700 rounded-lg p-4"
+        >
+          <div class="flex items-center gap-2 mb-2">
+            <span :class="['px-2 py-0.5 rounded text-xs font-medium', getCostColor(tier.cost)]">
+              {{ tier.cost }}
+            </span>
+            <span class="text-white font-medium text-sm">{{ tier.label }}</span>
+          </div>
+          <p class="text-slate-400 text-xs mb-2">{{ tier.range }}</p>
+          <p class="text-white text-sm font-medium">{{ tier.model }}</p>
         </div>
       </div>
     </div>

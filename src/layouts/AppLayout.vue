@@ -25,11 +25,6 @@ const navItems: NavItem[] = [
     path: '/app/dashboard',
   },
   {
-    title: 'Organizations',
-    icon: '🏢',
-    path: '/app/organizations',
-  },
-  {
     title: 'Reviews',
     icon: '✓',
     path: '/app/organizations',
@@ -40,9 +35,14 @@ const navItems: NavItem[] = [
     path: '/app/analytics',
   },
   {
-    title: 'Settings',
+    title: 'RAG Knowledge Base',
+    icon: '🧠',
+    path: '/app/rag-knowledge-base',
+  },
+  {
+    title: 'Setting',
     icon: '⚙️',
-    path: '/app/settings',
+    path: '/app/setting',
   },
 ]
 
